@@ -1,0 +1,19 @@
+# Virtual environment
+venv/
+
+# Environment variables (contains secrets)
+.env
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+# pytest cache
+.pytest_cache/
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
