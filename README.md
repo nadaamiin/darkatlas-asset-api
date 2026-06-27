@@ -254,3 +254,14 @@ Assets are deduplicated by `value + type` combination. Re-importing the same ass
 - Bulk import never crashes on a single bad record — it skips and reports failures
 - All endpoints return consistent JSON error responses
 - 404 for missing resources, 401 for missing/invalid auth, 422 for validation errors
+
+## Security Considerations
+
+- API keys are loaded from environment variables, never hardcoded
+- `.env` is excluded from version control via `.gitignore`
+- All write operations require API key authentication
+- Input validation is enforced via Pydantic schemas on all endpoints
+- Enum types restrict asset type and status to allowed values only
+- Bulk import handles malformed records gracefully without crashing
+- Pagination prevents large data dumps (max page_size: 100)
+- Foreign key constraints with CASCADE prevent orphaned relationships
