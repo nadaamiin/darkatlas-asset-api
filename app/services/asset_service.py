@@ -5,6 +5,9 @@ from sqlalchemy import or_
 from app.models.asset import Asset, AssetStatus
 from app.schemas.asset import AssetCreate, AssetUpdate
 from app.models.relationship import AssetRelationship
+from sqlalchemy import cast
+from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
+from sqlalchemy import String
 
 
 # Helper to fetch one asset row from the database by ID
@@ -33,7 +36,7 @@ def get_assets(
     if status:
         query = query.filter(Asset.status == status)
     if tag:
-        query = query.filter(Asset.tags.contains([tag]))
+        query = query.filter(Asset.tags.any(tag))
     if value_contains:
         query = query.filter(Asset.value.ilike(f"%{value_contains}%"))
 
