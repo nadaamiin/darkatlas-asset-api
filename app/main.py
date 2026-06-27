@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from app.config import settings
+from app.routers.assets import router as assets_router
 
 app = FastAPI(
     title="DarkAtlas Asset Management API",
@@ -7,6 +8,8 @@ app = FastAPI(
     version="1.0.0",
     debug=settings.debug
 )
+
+app.include_router(assets_router)
 
 # Define a root endpoint to check if the API is running
 @app.get("/")

@@ -82,8 +82,11 @@ def create_asset(db: Session, asset_in: AssetCreate):
         return existing
 
     # If a new asset, create it with a new record
+
+    asset_id = getattr(asset_in, 'id', None) or str(uuid.uuid4()),
+
     asset = Asset(
-        id=asset_in.id or str(uuid.uuid4()),
+        id=asset_id,
         type=asset_in.type,
         value=asset_in.value,
         status=asset_in.status,

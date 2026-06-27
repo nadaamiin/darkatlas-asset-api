@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import Optional
 from datetime import datetime
 from enum import Enum
@@ -21,7 +21,6 @@ class AssetStatus(str, Enum):
 
 # What the user sends when creating an asset
 class AssetCreate(BaseModel):
-    id: Optional[str] = None        # Optional, generate it if not provided
     type: AssetType
     value: str
     status: AssetStatus = AssetStatus.active
@@ -29,6 +28,10 @@ class AssetCreate(BaseModel):
     tags: list[str] = []
     metadata: dict = {}
 
+
+# Inherited from AssetCreate, but allows for an optional ID field for importing assets
+class AssetImport(AssetCreate):
+    id: Optional[str] = None
 
 # What the user sends when updating an asset and what fields can be updated
 class AssetUpdate(BaseModel):
@@ -49,6 +52,18 @@ class AssetResponse(BaseModel):
     source: str
     tags: list[str]
     metadata: dict
+
+    @model_validator(mode='before')
+    @classmethod
+    def extract_metadata(cls, values):
+        if hasattr(values, '__dict__'):
+            data = {}
+            for key in ['id', 'type', 'value', 'status', 'first_seen', 
+                       'last_seen', 'source', 'tags']:
+                data[key] = getattr(values, key, None)
+            data['metadata'] = getattr(values, 'metadata_', {}) or {}
+            return data
+        return values
 
     class Config:
         from_attributes = True
