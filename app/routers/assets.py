@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
+from app.auth import verify_api_key
 from app.schemas.asset import (
     AssetCreate, AssetImport, AssetUpdate,
     AssetResponse, AssetListResponse,
@@ -17,6 +18,7 @@ from app.models.relationship import AssetRelationship
 router = APIRouter(prefix="/assets", tags=["Assets"])
 
 
+# GET /assets/
 @router.get("/", response_model=AssetListResponse)
 def list_assets(
     page: int = Query(1, ge=1),
@@ -42,6 +44,7 @@ def list_assets(
     )
 
 
+# GET /assets/{asset_id}
 @router.get("/{asset_id}", response_model=AssetResponse)
 def read_asset(asset_id: str, db: Session = Depends(get_db)):
     asset = get_asset(db, asset_id)
@@ -50,7 +53,8 @@ def read_asset(asset_id: str, db: Session = Depends(get_db)):
     return asset
 
 
-@router.post("/", response_model=AssetResponse, status_code=201)
+# POST /assets/
+@router.post("/", response_model=AssetResponse, status_code=201, dependencies=[Depends(verify_api_key)])
 def create_asset_endpoint(
     asset_in: AssetCreate,
     db: Session = Depends(get_db)
@@ -58,7 +62,8 @@ def create_asset_endpoint(
     return create_asset(db, asset_in)
 
 
-@router.patch("/{asset_id}", response_model=AssetResponse)
+# PATCH /assets/{asset_id}
+@router.patch("/{asset_id}", response_model=AssetResponse, dependencies=[Depends(verify_api_key)])
 def update_asset_endpoint(
     asset_id: str,
     asset_in: AssetUpdate,
@@ -70,7 +75,8 @@ def update_asset_endpoint(
     return asset
 
 
-@router.delete("/{asset_id}", status_code=204)
+# DELETE /assets/{asset_id}
+@router.delete("/{asset_id}", status_code=204, dependencies=[Depends(verify_api_key)])
 def delete_asset_endpoint(
     asset_id: str,
     db: Session = Depends(get_db)
@@ -80,7 +86,8 @@ def delete_asset_endpoint(
         raise HTTPException(status_code=404, detail="Asset not found")
 
 
-@router.post("/bulk", response_model=dict)
+# POST /assets/bulk
+@router.post("/bulk", response_model=dict, dependencies=[Depends(verify_api_key)])
 def bulk_import(
     assets: list[AssetImport],
     db: Session = Depends(get_db)
@@ -110,14 +117,18 @@ def bulk_import(
     }
 
 
-@router.post("/mark-stale", response_model=dict)
+# POST /assets/mark-stale
+@router.post("/mark-stale", response_model=dict, dependencies=[Depends(verify_api_key)])
 def mark_stale_endpoint(
     days: int = Query(30, ge=1),
     db: Session = Depends(get_db)
 ):
     count = mark_stale(db, days)
     return {"marked_stale": count}
-@router.post("/relationships", response_model=RelationshipResponse)
+
+
+# POST /assets/relationships
+@router.post("/relationships", response_model=RelationshipResponse, dependencies=[Depends(verify_api_key)])
 def create_relationship_endpoint(
     rel_in: RelationshipCreate,
     db: Session = Depends(get_db)
@@ -136,6 +147,7 @@ def create_relationship_endpoint(
     return relationship
 
 
+# GET /assets/{asset_id}/relationships
 @router.get("/{asset_id}/relationships", response_model=list[RelationshipResponse])
 def get_relationships_endpoint(
     asset_id: str,
@@ -147,6 +159,7 @@ def get_relationships_endpoint(
     return get_asset_relationships(db, asset_id)
 
 
+# GET /assets/{asset_id}/graph
 @router.get("/{asset_id}/graph", response_model=AssetGraphResponse)
 def get_asset_graph_endpoint(
     asset_id: str,
