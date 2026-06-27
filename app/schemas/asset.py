@@ -75,3 +75,30 @@ class AssetListResponse(BaseModel):
     page: int
     page_size: int
     items: list[AssetResponse]
+
+
+
+
+# Relationship schemas
+class RelationshipCreate(BaseModel):
+    source_id: str      # eg. Domain 
+    target_id: str      # eg. Subdomain
+    relationship_type: str  # eg. belongs to
+
+
+class RelationshipResponse(BaseModel):
+    id: str
+    source_id: str
+    target_id: str
+    relationship_type: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# Combines one asset with its related relationships and related assets
+class AssetGraphResponse(BaseModel):
+    asset: AssetResponse
+    relationships: list[RelationshipResponse]
+    related_assets: list[AssetResponse]

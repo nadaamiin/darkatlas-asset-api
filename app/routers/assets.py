@@ -2,12 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.asset import (
-    AssetCreate, AssetImport, AssetUpdate, AssetResponse, AssetListResponse
+    AssetCreate, AssetImport, AssetUpdate,
+    AssetResponse, AssetListResponse,
+    RelationshipCreate, RelationshipResponse, AssetGraphResponse
 )
 from app.services.asset_service import (
     get_asset, get_assets, create_asset,
-    update_asset, delete_asset, mark_stale
+    update_asset, delete_asset, mark_stale,
+    create_relationship, get_asset_relationships, get_asset_graph
 )
+from app.models.relationship import AssetRelationship
+
 
 router = APIRouter(prefix="/assets", tags=["Assets"])
 
@@ -112,3 +117,42 @@ def mark_stale_endpoint(
 ):
     count = mark_stale(db, days)
     return {"marked_stale": count}
+@router.post("/relationships", response_model=RelationshipResponse)
+def create_relationship_endpoint(
+    rel_in: RelationshipCreate,
+    db: Session = Depends(get_db)
+):
+    relationship = create_relationship(
+        db,
+        rel_in.source_id,
+        rel_in.target_id,
+        rel_in.relationship_type
+    )
+    if not relationship:
+        raise HTTPException(
+            status_code=404,
+            detail="One or both assets not found"
+        )
+    return relationship
+
+
+@router.get("/{asset_id}/relationships", response_model=list[RelationshipResponse])
+def get_relationships_endpoint(
+    asset_id: str,
+    db: Session = Depends(get_db)
+):
+    asset = get_asset(db, asset_id)
+    if not asset:
+        raise HTTPException(status_code=404, detail="Asset not found")
+    return get_asset_relationships(db, asset_id)
+
+
+@router.get("/{asset_id}/graph", response_model=AssetGraphResponse)
+def get_asset_graph_endpoint(
+    asset_id: str,
+    db: Session = Depends(get_db)
+):
+    graph = get_asset_graph(db, asset_id)
+    if not graph:
+        raise HTTPException(status_code=404, detail="Asset not found")
+    return graph

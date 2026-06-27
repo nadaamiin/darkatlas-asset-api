@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from app.models.asset import Asset, AssetStatus
 from app.schemas.asset import AssetCreate, AssetUpdate
+from app.models.relationship import AssetRelationship
 
 
 # Helper to fetch one asset row from the database by ID
@@ -145,3 +146,73 @@ def mark_stale(db: Session, days: int = 30):
 
     db.commit()
     return len(assets)
+
+
+
+def create_relationship(db: Session, source_id: str, target_id: str, relationship_type: str):
+    # Check that both assets exist
+    source = get_asset(db, source_id)
+    target = get_asset(db, target_id)
+
+    if not source or not target:
+        return None
+
+    # Check if relationship already exists from the relationships table
+    exists = db.query(AssetRelationship).filter(
+        AssetRelationship.source_id == source_id,
+        AssetRelationship.target_id == target_id,
+        AssetRelationship.relationship_type == relationship_type
+    ).first()
+
+    if exists:
+        return exists
+
+    # Create new relationship
+    relationship = AssetRelationship(
+        id=str(uuid.uuid4()),
+        source_id = source_id,
+        target_id = target_id,
+        relationship_type = relationship_type
+    )
+    db.add(relationship)
+    db.commit()
+    db.refresh(relationship)
+    return relationship
+
+
+def get_asset_relationships(db: Session, asset_id: str):
+    # Get all relationships where this asset is source or target
+    return db.query(AssetRelationship).filter(
+        or_(
+            AssetRelationship.source_id == asset_id,
+            AssetRelationship.target_id == asset_id
+        )
+    ).all()
+
+
+def get_asset_graph(db: Session, asset_id: str):
+    # Get the asset itself
+    asset = get_asset(db, asset_id)
+    if not asset:
+        return None
+
+    # Get all relationships
+    relationships = get_asset_relationships(db, asset_id)
+
+    # Get all related assets
+    related_ids = set()
+    for rel in relationships:
+        if rel.source_id != asset_id:
+            related_ids.add(rel.source_id)
+        if rel.target_id != asset_id:
+            related_ids.add(rel.target_id)
+
+    related_assets = db.query(Asset).filter(
+        Asset.id.in_(related_ids)
+    ).all()
+
+    return {
+        "asset": asset,
+        "relationships": relationships,
+        "related_assets": related_assets
+    }
