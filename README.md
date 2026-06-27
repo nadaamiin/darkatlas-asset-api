@@ -265,3 +265,14 @@ Assets are deduplicated by `value + type` combination. Re-importing the same ass
 - Bulk import handles malformed records gracefully without crashing
 - Pagination prevents large data dumps (max page_size: 100)
 - Foreign key constraints with CASCADE prevent orphaned relationships
+
+## CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration.
+
+Every push to `main` automatically:
+1. Spins up a PostgreSQL database
+2. Installs all dependencies
+3. Runs all 16 pytest tests
+
+You can see the pipeline status on the GitHub Actions tab, or by the green checkmark on the repo.
