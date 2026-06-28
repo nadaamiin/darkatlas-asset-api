@@ -14,36 +14,28 @@ A REST API for managing internet-facing security assets, built as part of the Da
 ---
 
 ## Project Structure
+
+```
 darkatlas-asset-api/
-
+├── .github/
+│   └── workflows/
+│       └── ci.yml       # GitHub Actions CI pipeline
 ├── app/
-
 │   ├── main.py          # FastAPI app entry point
-
 │   ├── config.py        # Environment variables
-
 │   ├── database.py      # Database connection
-
 │   ├── auth.py          # API key authentication
-
 │   ├── models/          # SQLAlchemy database models
-
 │   ├── schemas/         # Pydantic request/response schemas
-
 │   ├── routers/         # API endpoints
-
 │   └── services/        # Business logic
-
 ├── alembic/             # Database migrations
-
 ├── tests/               # pytest tests
-
 ├── Dockerfile
-
 ├── docker-compose.yml
-
+├── .env.example
 └── requirements.txt
-
+```
 ---
 
 ## Setup & Run
@@ -141,7 +133,9 @@ FastAPI generates interactive documentation automatically:
 ## Authentication
 
 Write operations require an API key in the request header:
+```
 X-API-Key: your-api-key
+```
 
 Read operations (`GET`) are public and require no authentication.
 
@@ -172,18 +166,14 @@ Read operations (`GET`) are public and require no authentication.
 ## Filtering & Pagination
 
 The `GET /assets/` endpoint supports:
+```
 /assets/?type=domain
-
 /assets/?status=active
-
 /assets/?tag=prod
-
 /assets/?value_contains=example
-
 /assets/?sort_by=last_seen&sort_order=desc
-
 /assets/?page=1&page_size=20
-
+```
 ---
 
 ## Bulk Import
